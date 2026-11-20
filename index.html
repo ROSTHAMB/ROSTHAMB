@@ -2164,7 +2164,7 @@ function renderCatalog() {
    ⚠ NO TOCAR: casi todo depende de esta función. ── */
 /* ── GASEOSAS DE LAS PROMOS DÚO: hay que elegirlas sí o sí (2 por cada promo en el pedido) ── */
 const drinkPick = {};   // id de la promo → ["Pepsi 500 ml", "", ...]
-const gaseosaOpciones = () => PRODUCTOS.filter(p => p.cat === "bebidas" && !estaOculto(p) && p.disponible !== false && !/x\s*2\s*$/i.test(p.nombre)).map(p => p.nombre);
+const gaseosaOpciones = () => PRODUCTOS.filter(p => p.cat === "bebidas" && !estaOculto(p) && p.disponible !== false && !p.sinPromo && !/x\s*2\s*$/i.test(p.nombre)).map(p => p.nombre);
 function syncPicks(ids) {
   const opts = gaseosaOpciones();
   Object.keys(drinkPick).forEach(k => { if (!ids.includes(k)) delete drinkPick[k]; });
