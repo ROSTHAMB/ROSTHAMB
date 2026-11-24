@@ -1371,6 +1371,69 @@ button:focus-visible, a:focus-visible {
   }
   .burger { opacity: 1; transform: none; }
 }
+
+/* ───────── ANIMACIÓN DE INICIO: se prende la hamburguesa de neón ─────────
+   ✎ Duración total ≈ 3,8 s. Para cambiarla: los tiempos están en los @keyframes spOn / spLetters / spOut y en el script (SPLASH_MS).
+   Se muestra una vez por sesión. Para verla de nuevo: abrí la página con ?splash al final de la dirección. */
+html.sp-lock, html.sp-lock body { overflow: hidden; }
+#splash {
+  position: fixed; inset: 0; z-index: 100000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: #050505;
+  padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px);
+  cursor: pointer; touch-action: none; overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none;
+}
+#splash.out { opacity: 0; visibility: hidden; transition: opacity .55s ease, visibility 0s .55s; pointer-events: none; }
+.sp-glow {
+  position: absolute; left: 50%; top: 50%; width: min(120vw, 900px); aspect-ratio: 1;
+  transform: translate3d(-50%, -52%, 0);
+  background: radial-gradient(closest-side, rgba(255,109,0,.32), rgba(255,167,38,.10) 45%, transparent 72%);
+  opacity: 0; pointer-events: none;
+}
+.sp-stage { position: relative; width: min(88vw, 540px); aspect-ratio: 890 / 280; }
+.sp-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; user-select: none; }
+/* hamburguesa apagada: el tubo de vidrio sin luz */
+.sp-off { opacity: .16; filter: grayscale(1) brightness(.9); }
+/* letras R, S y T: se recortan a los lados de la hamburguesa para que el logo arranque con la hamburguesa sola */
+.sp-letters { opacity: 0; }
+.sp-l { clip-path: inset(0 75.06% 0 0); }
+.sp-r { clip-path: inset(0 0 0 54.72%); }
+.sp-neon, .sp-glow, .sp-letters { will-change: opacity; }
+.sp-neon, .sp-letters { transform: translateZ(0); }
+.sp-neon { opacity: 0; }
+.sp-outer {
+  filter: brightness(1.15) saturate(1.7)
+          drop-shadow(0 0 2px rgba(255,217,160,.6)) drop-shadow(0 0 7px rgba(255,167,38,.65))
+          drop-shadow(0 0 16px rgba(255,122,0,.6)) drop-shadow(0 0 32px rgba(255,85,0,.45));
+}
+.sp-line { width: 0; height: 2px; margin-top: clamp(10px, 3vh, 26px); border-radius: 2px; opacity: 0;
+  background: linear-gradient(90deg, transparent, #ffa726, transparent); box-shadow: 0 0 12px rgba(255,167,38,.7); }
+.sp-hint { position: absolute; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); left: 0; right: 0; text-align: center;
+  font: 12px/1 system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #fff; opacity: 0; }
+
+/* La línea de tiempo arranca recién cuando las imágenes ya cargaron (el script agrega la clase "go") */
+#splash.go .sp-neon   { animation: spOn 2.1s .35s linear both; }
+#splash.go .sp-glow   { animation: spGlow 2.1s .35s linear both; }
+#splash.go .sp-letters{ animation: spLetters .9s 1.95s cubic-bezier(.2,.7,.2,1) both; }
+#splash.go .sp-line   { animation: spLine .8s 2.5s ease-out both; }
+#splash.go .sp-hint   { animation: spHint .5s 1.2s ease-out both; }
+@media (max-width: 600px) {      /* celulares: menos capas de resplandor = animación fluida también en equipos modestos */
+  .sp-outer { filter: brightness(1.15) saturate(1.7) drop-shadow(0 0 5px rgba(255,167,38,.7)) drop-shadow(0 0 14px rgba(255,100,0,.55)); }
+  .sp-glow { width: 130vw; }
+}
+@keyframes spOn {      /* parpadeo de tubo de neón hasta quedar prendido fijo */
+  0%, 8% { opacity: 0 }  9% { opacity: .95 } 11% { opacity: .12 } 14% { opacity: .9 } 16%, 30% { opacity: 0 }
+  32% { opacity: .8 } 35% { opacity: .18 } 46% { opacity: .95 } 49% { opacity: .35 } 58%, 100% { opacity: 1 } }
+@keyframes spGlow { 0%, 30% { opacity: 0 } 32% { opacity: .4 } 35% { opacity: .1 } 46% { opacity: .6 } 49% { opacity: .25 } 58% { opacity: .8 } 100% { opacity: 1 } }
+@keyframes spLetters { from { opacity: 0; filter: brightness(2.4); } to { opacity: 1; filter: brightness(1); } }
+@keyframes spLine { from { width: 0; opacity: 0 } to { width: min(60vw, 360px); opacity: 1 } }
+@keyframes spHint { from { opacity: 0 } to { opacity: .35 } }
+@media (prefers-reduced-motion: reduce) {
+  #splash.go .sp-neon, #splash.go .sp-glow, #splash.go .sp-letters, #splash.go .sp-line { animation: none; opacity: 1; }
+  #splash.go .sp-line { width: min(60vw, 360px); }
+  #splash.go .sp-hint { animation: none; opacity: 0; }
+}
 </style>
 <script>
 /* ═══════════════════════════════════════════════════════════
@@ -1413,6 +1476,52 @@ window.resolveRealPhoto = function(img) {
 </script>
 </head>
 <body>
+
+<!-- ═════ ANIMACIÓN DE INICIO (se muestra una vez por sesión; con ?splash se fuerza) ═════ -->
+<noscript><style>#splash{display:none}</style></noscript>
+<div id="splash" role="presentation" aria-hidden="true">
+  <div class="sp-glow"></div>
+  <div class="sp-stage">
+    <img class="sp-img sp-off" src="logo-rost-burger.png" onerror="this.onerror=null;this.src='fotos/logo-rost-burger.png'" alt="" width="890" height="280">
+    <img class="sp-img sp-letters sp-l" src="logo-rost-removebg-preview.png" onerror="this.onerror=null;this.src='fotos/logo-rost-removebg-preview.png'" alt="" width="890" height="280">
+    <img class="sp-img sp-letters sp-r" src="logo-rost-removebg-preview.png" onerror="this.onerror=null;this.src='fotos/logo-rost-removebg-preview.png'" alt="" width="890" height="280">
+    <img class="sp-img sp-neon sp-outer" src="logo-rost-neon-grueso.png" onerror="this.onerror=null;this.src='fotos/logo-rost-neon-grueso.png'" alt="" width="890" height="280">
+    <img class="sp-img sp-neon sp-core" src="logo-rost-neon-nucleo.png" onerror="this.onerror=null;this.src='fotos/logo-rost-neon-nucleo.png'" alt="" width="890" height="280">
+  </div>
+  <div class="sp-line"></div>
+  <div class="sp-hint">Tocá para entrar</div>
+</div>
+<script>
+(function () {
+  var SPLASH_MS = 3900;                          // ✎ cuánto dura en pantalla antes de salir solo
+  var el = document.getElementById("splash"); if (!el) return;
+  var root = document.documentElement, done = false, seen = false;
+  try { seen = sessionStorage.getItem("rostSplash") === "1"; } catch (e) {}
+  if (/[?&]splash\b/.test(location.search)) seen = false;
+  if (seen) { el.remove(); return; }
+  root.classList.add("sp-lock");
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function cerrar() {
+    if (done) return; done = true;
+    try { sessionStorage.setItem("rostSplash", "1"); } catch (e) {}
+    el.classList.add("out"); root.classList.remove("sp-lock");
+    setTimeout(function () { el.remove(); }, 800);
+  }
+  el.addEventListener("click", cerrar);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" || e.key === "Enter" || e.key === " ") cerrar(); });
+  // esperar a que carguen las 5 imágenes (máx. 2,5 s) para que el neón no arranque con piezas faltando
+  var imgs = Array.prototype.slice.call(el.querySelectorAll("img")), pend = imgs.length, started = false;
+  function arrancar() {
+    if (started || done) return; started = true; el.classList.add("go");
+    setTimeout(cerrar, reduce ? 1600 : SPLASH_MS);
+  }
+  imgs.forEach(function (im) {
+    function ok() { if (--pend <= 0) arrancar(); }
+    if (im.complete && im.naturalWidth) ok(); else { im.addEventListener("load", ok, { once: true }); im.addEventListener("error", ok, { once: true }); }
+  });
+  setTimeout(arrancar, 2500);
+})();
+</script>
 
 <!-- Toast para avisos rápidos -->
 <div class="toast-msg" id="toastMsg" role="status" aria-live="polite"></div>
